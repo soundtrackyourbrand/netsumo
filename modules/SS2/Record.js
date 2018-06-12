@@ -6,6 +6,10 @@ module.exports = class Record {
     this.type = options.type;
     this.currentLines = {};
 
+    if(options.records) {
+      this.records = options.records
+    }
+    this.sublists = {}
     this._populateDefaultValues(options);
     this._populateSubrecords(options);
     this._populateSublists(options);
@@ -47,6 +51,10 @@ module.exports = class Record {
     if( typeof options === 'string' || options instanceof String ) {
       if(this[options]) {
         return this[options].value;
+      }
+    } else if (typeof options === 'object' || options instanceof Object){
+      if(this[options.fieldId]){
+        return this[options.fieldId].value
       }
     }
   }
@@ -127,11 +135,69 @@ module.exports = class Record {
     const field = options.fieldId;
     return this.sublists[sublistId] ? this.sublists[sublistId][index][field] : undefined
   }
+  insertLine(options){
+    if(options.sublistId == null){
+      throw new Error('SSS_MISSING_REQD_ARGUMENT')
+    }
+    if(options.line == null){
+      throw new Error('SSS_MISSING_REQD_ARGUMENT')
+    } 
+      
+    const sublistId = options.sublistId;
+    if(!this.sublists){
+      this.sublists = {}
+    }
+    if(this.sublists[sublistId] == null){
+
+      this.sublists[sublistId] = []
+    }
+    if(options.line > this.sublists.length){
+      throw new Error()
+    }
+    this.sublists[options.sublistId].push({
+      subrecords: {}
+    })
+        
+      
+  }
+
+  setSublistValue(options){
+    const sublistId = options.sublistId;
+    const fieldId = options.fieldId;
+    const line = options.line
+    const value = options.value
+    if(!this.sublists){
+      this.sublists = {}
+    }
+    if(!this.sublists[sublistId]){
+      this.sublists[sublistId] = []
+    }
+    if(!this.sublists[sublistId][line]) {
+      this.sublists[sublistId][line] = {}
+    }
+    this.sublists[sublistId][line][fieldId] = value
+
+    
+  }
+
+  save(options){
+    if(this.records){
+      if(this.id){
+        //find and update
+      } else {
+        this.id = this.records.length+1;
+        this.records.push(this);
+        return this.id
+      }
+    }
+  }
 
   cancelLine(options) {}
   commitLine(options) {}
   findMatrixSublistLineWithValue(options){}
-  findSublistLineWithValue(options){}
+  findSublistLineWithValue(options){
+    return -1; 
+  }
   getCurrentMatrixSublistValue(options){}
   getCurrentSublistField(options){}
   getCurrentSublistIndex(options){}
@@ -149,22 +215,30 @@ module.exports = class Record {
   getSublists(){}
   getSublistField(options){}
   getSublistFields(options){}
-  getSublistSubrecord(options){}
+  getSublistSubrecord(options){
+    if(!this.sublists[options.sublistId][options.line]['subrecords'][options.fieldId]){
+    this.sublists[options.sublistId][options.line]['subrecords'][options.fieldId] = new Record({
+        id: 1234,
+        type: options.fieldId,
+        isDynamic: false
+      })
+    }
+    return this.sublists[options.sublistId][options.line]['subrecords'][options.fieldId]
+  }
   getSublistText(options){}
   hasCurrentSublistSubrecord(options){}
   hasSublistSubrecord(options){}
   hasSubrecord(options){}
-  insertLine(options){}
   removeCurrentSublistSubrecord(options){}
   removeLine(options){}
   removeSublistSubrecord(options){}
   removeSubrecord(options){}
-  save(options){}
   setCurrentMatrixSublistValue(options){}
   setCurrentSublistText(options){}
   setMatrixHeaderValue(options){}
-  setMatrixSublistValue(options){}
+  setMatrixSublistValue(options){
+     this.setSublistValue(options)
+  }
   setSublistText(options){}
-  setSublistValue(options){}
   setText(options){}
 }

@@ -1,11 +1,53 @@
+const NRecord = require('./Nrecord')
+const Search = class Search {
+  constructor(options){
+    this.type = options.type
+    this.filters = options.filters
+    this.columns = options.columns
+    this.records = options.records
+  }
+
+    
+  runPaged(){
+    return {
+      count: 0
+    }
+  }
+  run(){
+    var recs = this.records.filter(record => (  record.type === this.type && record[this.filters[0].name].value === this.filters[0].values[0]))
+    return new ResultSet(recs)
+    
+  }
+      
+}
+
+const ResultSet = class ResultSet {
+  constructor(result){
+    this.result = result
+  }
+
+  getRange(start, end){
+    return this.result.slice(start,end)
+  }
+}
+    
 module.exports = class NSearch {
-  constructor() {
+  constructor(store) {
     this.Type = {
       CUSTOMER:"customer",
       ITEM:"item",
-      LOCATION:"location"
+      LOCATION:"location",
+      SALES_ORDER:'salesorder',
+      INVOICE:'invoice',
+    }
+    this.Operator = {
+      IS: "is",
+      ANYOF: "anyof"
     }
     this.records = [];
+    if(store){
+      this.records = store
+    }
   }
 
   lookupFields(data) {
@@ -23,5 +65,10 @@ module.exports = class NSearch {
 
   addRecord(record) {
     this.records.push(record)
+  }
+
+  create(options){
+    options.records = this.records
+    return new Search(options) 
   }
 }
